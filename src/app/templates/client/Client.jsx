@@ -142,7 +142,7 @@ function Client() {
           />
         </div>
         <div className={isJitsiRoom ? 'hidden' : ROOM_CLASS} ref={roomWrapperRef}>
-          <ClientContent />
+          <ClientContent isJitsiRoom={isJitsiRoom} />
         </div>
         <Windows />
         <Dialogs />

@@ -8,7 +8,7 @@ import { openNavigation } from '../../../client/action/navigation';
 import Welcome from '../../organisms/welcome/Welcome';
 import { RoomBaseView } from '../../organisms/room/Room';
 
-export function ClientContent() {
+export function ClientContent({ isJitsiRoom }) {
   const [roomInfo, setRoomInfo] = useState({
     room: null,
     eventId: null,
@@ -43,6 +43,10 @@ export function ClientContent() {
   if (!room) {
     setTimeout(() => openNavigation());
     return <Welcome />;
+  }
+
+  if (isJitsiRoom) {
+    return null;
   }
 
   return <RoomBaseView room={room} eventId={eventId} />;
