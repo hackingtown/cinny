@@ -1,14 +1,9 @@
 {
-  "defaultHomeserver": 2,
+  "defaultHomeserver": 0,
   "homeserverList": [
-    "converser.eu",
-    "envs.net",
-    "matrix.org",
-    "monero.social",
-    "mozilla.org",
-    "xmr.se"
+    "matrix.hacking.town"
   ],
-  "allowCustomHomeservers": true,
+  "allowCustomHomeservers": false,
 
   "hashRouter": {
     "enabled": false,
