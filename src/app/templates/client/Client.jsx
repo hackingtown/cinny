@@ -10,22 +10,38 @@ import Navigation from '../../organisms/navigation/Navigation';
 import ContextMenu, { MenuItem } from '../../atoms/context-menu/ContextMenu';
 import IconButton from '../../atoms/button/IconButton';
 import ReusableContextMenu from '../../atoms/context-menu/ReusableContextMenu';
-import Room from '../../organisms/room/Room';
+import JitsiRoom from '../../organisms/room/JitsiRoom';
 import Windows from '../../organisms/pw/Windows';
 import Dialogs from '../../organisms/pw/Dialogs';
-import EmojiBoardOpener from '../../organisms/emoji-board/EmojiBoardOpener';
 
 import initMatrix from '../../../client/initMatrix';
 import navigation from '../../../client/state/navigation';
 import cons from '../../../client/state/cons';
-import DragDrop from '../../organisms/drag-drop/DragDrop';
 
 import VerticalMenuIC from '../../../../public/res/ic/outlined/vertical-menu.svg';
+import { MatrixClientProvider } from '../../hooks/useMatrixClient';
+import { ClientContent } from './ClientContent';
+import { useSetting } from '../../state/hooks/settings';
+import { settingsAtom } from '../../state/settings';
+
+function SystemEmojiFeature() {
+  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+  if (twitterEmoji) {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
+  } else {
+    document.documentElement.style.setProperty('--font-emoji', 'Twemoji_DISABLED');
+  }
+
+  return null;
+}
 
 function Client() {
   const [isLoading, changeLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Heating up');
   const [dragCounter, setDragCounter] = useState(0);
+  const [isJitsiRoom, setIsJitsiRoom] = useState(false);
+  const [jitsiCallId, setJitsiCallId] = useState(null);
   const classNameHidden = 'client__item-hidden';
 
   const navWrapperRef = useRef(null);
@@ -44,19 +60,17 @@ function Client() {
     navigation.on(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
     navigation.on(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
 
-    return (() => {
+    return () => {
       navigation.removeListener(cons.events.navigation.ROOM_SELECTED, onRoomSelected);
       navigation.removeListener(cons.events.navigation.NAVIGATION_OPENED, onNavigationSelected);
-    });
+    };
   }, []);
 
   useEffect(() => {
+    changeLoading(true);
     let counter = 0;
     const iId = setInterval(() => {
-      const msgList = [
-        'Almost there...',
-        'Looks like you have a lot of stuff to heat up!',
-      ];
+      const msgList = ['Almost there...', 'Looks like you have a lot of stuff to heat up!'];
       if (counter === msgList.length - 1) {
         setLoadingMsg(msgList[msgList.length - 1]);
         clearInterval(iId);
@@ -80,103 +94,62 @@ function Client() {
         <div className="loading__menu">
           <ContextMenu
             placement="bottom"
-            content={(
+            content={
               <>
                 <MenuItem onClick={() => initMatrix.clearCacheAndReload()}>
                   Clear cache & reload
                 </MenuItem>
                 <MenuItem onClick={() => initMatrix.logout()}>Logout</MenuItem>
               </>
+            }
+            render={(toggle) => (
+              <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />
             )}
-            render={(toggle) => <IconButton size="extra-small" onClick={toggle} src={VerticalMenuIC} />}
           />
         </div>
         <Spinner />
-        <Text className="loading__message" variant="b2">{loadingMsg}</Text>
+        <Text className="loading__message" variant="b2">
+          {loadingMsg}
+        </Text>
 
         <div className="loading__appname">
-          <Text variant="h2" weight="medium">Cinny</Text>
+          <Text variant="h2" weight="medium">
+            Cinny
+          </Text>
         </div>
       </div>
     );
   }
 
-  function dragContainsFiles(e) {
-    if (!e.dataTransfer.types) return false;
-
-    for (let i = 0; i < e.dataTransfer.types.length; i += 1) {
-      if (e.dataTransfer.types[i] === 'Files') return true;
-    }
-    return false;
-  }
-
-  function modalOpen() {
-    return navigation.isRawModalVisible && dragCounter <= 0;
-  }
-
-  function handleDragOver(e) {
-    if (!dragContainsFiles(e)) return;
-
-    e.preventDefault();
-
-    if (!navigation.selectedRoomId || modalOpen()) {
-      e.dataTransfer.dropEffect = 'none';
-    }
-  }
-
-  function handleDragEnter(e) {
-    e.preventDefault();
-
-    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
-      setDragCounter(dragCounter + 1);
-    }
-  }
-
-  function handleDragLeave(e) {
-    e.preventDefault();
-
-    if (navigation.selectedRoomId && !modalOpen() && dragContainsFiles(e)) {
-      setDragCounter(dragCounter - 1);
-    }
-  }
-
-  function handleDrop(e) {
-    e.preventDefault();
-
-    setDragCounter(0);
-
-    if (modalOpen()) return;
-
-    const roomId = navigation.selectedRoomId;
-    if (!roomId) return;
-
-    const { files } = e.dataTransfer;
-    if (!files?.length) return;
-    const file = files[0];
-    initMatrix.roomsInput.setAttachment(roomId, file);
-    initMatrix.roomsInput.emit(cons.events.roomsInput.ATTACHMENT_SET, file);
-  }
+  const JITSI_ROOM_CLASS = 'jitsi_pip'
+  const ROOM_CLASS = `room__wrapper ${classNameHidden}`
+  let jitsiPip = '';
+  if (isJitsiRoom) jitsiPip = ROOM_CLASS;
+  else if (jitsiCallId) jitsiPip = JITSI_ROOM_CLASS;
 
   return (
-    <div
-      className="client-container"
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="navigation__wrapper" ref={navWrapperRef}>
-        <Navigation />
+    <MatrixClientProvider value={initMatrix.matrixClient}>
+      <div className="client-container">
+        <div className="navigation__wrapper" ref={navWrapperRef}>
+          <Navigation jitsiCallId={jitsiCallId} />
+        </div>
+        <div className={jitsiPip}>
+          <JitsiRoom
+            isJitsiRoom={isJitsiRoom}
+            setIsJitsiRoom={setIsJitsiRoom}
+            jitsiCallId={jitsiCallId}
+            setJitsiCallId={setJitsiCallId}
+          />
+        </div>
+        <div className={isJitsiRoom ? 'hidden' : ROOM_CLASS} ref={roomWrapperRef}>
+          <ClientContent isJitsiRoom={isJitsiRoom} />
+        </div>
+        <Windows />
+        <Dialogs />
+        <ReusableContextMenu />
+        <SystemEmojiFeature />
       </div>
-      <div className={`room__wrapper ${classNameHidden}`} ref={roomWrapperRef}>
-        <Room />
-      </div>
-      <Windows />
-      <Dialogs />
-      <EmojiBoardOpener />
-      <ReusableContextMenu />
-      <DragDrop isOpen={dragCounter !== 0} />
-    </div>
+    </MatrixClientProvider>
   );
 }
 
