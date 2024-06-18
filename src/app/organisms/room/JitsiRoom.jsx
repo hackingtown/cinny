@@ -111,7 +111,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
           <div className="call_iframe">
             <JitsiMeeting
               key={counter}
-              domain="meet.calyx.net"
+              domain="meet.hacking.town"
               roomName={`${roomName.replace(':', '')} ${(spaceName || sn)?.replace(
                 ':',
                 ''
