@@ -111,7 +111,8 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
           <div className="call_iframe">
             <JitsiMeeting
               key={counter}
-              domain="meet.hacking.town"
+              domain="meet.calyx.net"
+              domainApi="https://meet.hacking.town/external_api.js"
               roomName={`${roomName.replace(':', '')} ${(spaceName || sn)?.replace(
                 ':',
                 ''
@@ -176,8 +177,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
               userInfo={{
                 displayName: getUsername(mx.getUserId()),
               }}
-              
-              onApiReady={(funcServer) => {
+              onApiReady={(domainApi) => {
                 // here you can attach custom event listeners to the Jitsi Meet External API
                 // you can also store it locally to execute commands
               }}
