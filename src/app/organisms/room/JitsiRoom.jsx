@@ -176,7 +176,7 @@ function JitsiRoom({ isJitsiRoom, setIsJitsiRoom, jitsiCallId, setJitsiCallId })
               userInfo={{
                 displayName: getUsername(mx.getUserId()),
               }}
-              onApiReady={(externalApi) => {
+              onApiReady={"https://meet.hacking.town/external_api.js" => {
                 // here you can attach custom event listeners to the Jitsi Meet External API
                 // you can also store it locally to execute commands
               }}
